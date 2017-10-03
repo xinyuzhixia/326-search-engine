@@ -1,4 +1,5 @@
 from bottle import *
+from collections import OrderedDict
 historysearch={}
 @route('/')
 def search():
@@ -21,11 +22,12 @@ def do_search():
 		store_history(key,output[key])	
 	results = results+'</table>'
 
-	for key,value in sorted(historysearch.iteritems(),key = lambda(k,v) : (v,k)):
+	for key,value in sorted(historysearch.iteritems(),key=lambda (k,v):(v,k),reverse=True):
 		historyvalue='<tr><td>%s</td><td>%d</td></tr>'%(key,value)
 		history = history+historyvalue
-	history = history + '</table>'
-	return string + results
+	history = history + '</table>'	
+	return string + history
+
 
 def store_history(key,value):
 	if key in historysearch:
@@ -37,8 +39,9 @@ def store_history(key,value):
 
 
 def check_appearance(inputstring):
+	#inputstring = inputstring.lower()
 	splitstring = inputstring.split()
-	appearance = {}
+	appearance = OrderedDict()
 	for key in splitstring:
 		if key not in appearance:
 			appearance[key] = 1
