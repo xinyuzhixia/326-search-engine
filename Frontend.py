@@ -1,21 +1,24 @@
 from bottle import *
 from collections import OrderedDict
 historysearch={}
+
+
+
 @route('/')
 def search():
-	return '<html><head><title>Googing Search</title></head>\
-	<body><h1>Googing</h1><form action="/" method="post">\
-		<input type="text" name="keywords" ><br>\
-		<input type="submit" value="Search"></form></body></html>'
+	#return template('Query.html')
+	return'<html><head><title>Googing Search</title></head>\
+			<body><h1>Googing</h1><form action= "/search" method = "GET">\
+			<input type="text" name="keywords" ><br>\
+			<input type="submit" value="Search"></form></body></html>'
 
-@post('/')
+@route('/search')
 def do_search():
-	inputkeyword = request.forms.get('keywords')
-	output = check_appearance(inputkeyword)
-	string = '<p>Search for "%s"</p>'%(inputkeyword)
+	keywords = request.query.keywords	
+	output = check_appearance(keywords)
+	string = '<p>Search for "%s"</p>'%(keywords)
 	results = '<table id = "results"><tr> <th>Word</th> <th>Count</th></tr>'
 	history = '<table id = "history"><tr> <th>Word</th> <th>Count</th></tr>'
-
 	for key in output:
 		tablecontent = '<tr><td>%s</td><td>%d</td></tr>'%(key,output[key])
 		results = results+tablecontent
@@ -26,7 +29,7 @@ def do_search():
 		historyvalue='<tr><td>%s</td><td>%d</td></tr>'%(key,value)
 		history = history+historyvalue
 	history = history + '</table>'	
-	return string + history
+	return string + results + "<p>Search history</p>"+history
 
 
 def store_history(key,value):
@@ -49,5 +52,6 @@ def check_appearance(inputstring):
 			appearance[key] = appearance[key] + 1
 
 	return appearance
+
 
 run(host='localhost', port=8080, debug=True)
