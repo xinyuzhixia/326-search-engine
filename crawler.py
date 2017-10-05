@@ -53,20 +53,21 @@ class crawler(object):
         self._doc_id_cache = { }
         self._word_id_cache = { }
 
-        """ initialize dictionaries:
-        1. key: document_id, value: url (string) 
-        2. key: word_id , value: word (string)   
-        3. key: document_id, value: list of word_id 
-        4. key: word_id, value: list of document_id  
-        5. key: doc_id, value: title
-        6. key: doc_id, value: short description """
+        """ initialize data structure:
+        1. dict: key: document_id, value: url (string) 
+        2. dict: key: word_id , value: word (string)  
+        3. set: Lexicon , store a set of all of words  
+        4. key: document_id, value: list of word_id 
+        5. key: word_id, value: list of document_id   """
 
         self._docid_url_dic = dict()
         self._wordid_word_dic = dict()
+        self._lexicon = set()
         self._docid_listofword_dic = dict()
         self._wordid_listofdoc_dic = dict()
-        self._docid_title_dic = dict()
-        self._docid_description_dic = dict()
+        self.resolved_inverted_index_dict = dict()
+        #self._docid_title_dic = dict()
+        #self._docid_description_dic = dict()
 
 
         # functions to call when entering and exiting specific tags
@@ -167,17 +168,11 @@ class crawler(object):
         #          word is in the lexicon
         #       2) query the lexicon for the id assigned to this word, 
         #          store it in the word id cache, and return the id.
-        #pdb.set_trace()
-        if not self._wordid_word_dic:
-            # this lexico is empty
-            word_id = 0
-        else:
-            # if this lexico is not empty, get the new key based on the existing last key in the dic
-            word_id = list(self._wordid_word_dic.keys())[-1] + 1
-            # insert the new word_id and word pair into dict
-        self._wordid_word_dic[word_id] = word
 
-        #word_id = self._mock_insert_word(word)
+        word_id = self._mock_insert_word(word)
+        # add new element to dic and set
+        self._wordid_word_dic[word_id] = str(word)
+        self._lexicon.add(str(word))
         self._word_id_cache[word] = word_id
         return word_id
     
@@ -192,16 +187,10 @@ class crawler(object):
         #       doesn't exist in the db then only insert the url and leave
         #       the rest to their defaults.
 
-        if not self._docid_url_dic:
-            # this lexico is empty
-            doc_id = 0
-        else:
-            # if this lexico is not empty, get the new key based on the existing last key in the dic
-            doc_id = list(self._docid_url_dic.keys())[-1] + 1
-            # insert the new word_id and word pair into dict
-        self._docid_url_dic[doc_id] = url
         
-        #doc_id = self._mock_insert_document(url)
+        doc_id = self._mock_insert_document(url)
+        # add new element to dic
+        self._docid_url_dic[doc_id] = str(url)
         self._doc_id_cache[url] = doc_id
         return doc_id
     
@@ -229,7 +218,7 @@ class crawler(object):
         print "document title="+ repr(title_text)
 
         # TODO update document title for document id self._curr_doc_id
-        self._docid_title_dic[self._curr_doc_id, repr(title_text)]
+        #self._docid_title_dic[self._curr_doc_id, repr(title_text)]
     
     def _visit_a(self, elem):
         """Called when visiting <a> tags."""
@@ -256,7 +245,7 @@ class crawler(object):
         #       font sizes (in self._curr_words), add all the words into the
         #       database for this document
         word_list = [ pair[0] for pair in self._curr_words]
-        #pdb.set_trace()
+        # update _docid_listword_dic     
         self._docid_listofword_dic[self._curr_doc_id] = word_list
 
         print "    num words="+ str(len(self._curr_words))
@@ -274,8 +263,9 @@ class crawler(object):
     def _add_text(self, elem):
         """Add some text to the document. This records word ids and word font sizes
         into the self._curr_words list for later processing."""
-        words = WORD_SEPARATORS.split(elem.string.lower())
         #pdb.set_trace()
+        words = WORD_SEPARATORS.split(elem.string.lower())
+        #
         for word in words:
             word = word.strip()
             if word in self._ignored_words:
@@ -311,7 +301,7 @@ class crawler(object):
 
         while tag and tag.next:
             tag = tag.next
-
+            #print str(tag) + '\n'
             # html tag
             if isinstance(tag, Tag):
 
@@ -320,6 +310,7 @@ class crawler(object):
                     stack.pop()
 
                 tag_name = tag.name.lower()
+               
 
                 # ignore this tag and everything in it
                 if tag_name in self._ignored_tags:
@@ -339,6 +330,7 @@ class crawler(object):
             # text (text, cdata, comments, etc.)
             else:
                 self._add_text(tag)
+
     def get_inverted_index(self):
 
         for word_id in self._wordid_word_dic:
@@ -353,11 +345,11 @@ class crawler(object):
 
             self._wordid_listofdoc_dic[word_id] = docid_set
 
-        print self._wordid_listofdoc_dic
+        print "Inverted_index: " + str(self._wordid_listofdoc_dic)
 
     def resolved_inverted_index(self):
 
-        revolived_inverted_index_dict = dict()
+       
 
         for word_id in self._wordid_listofdoc_dic:
             # traverse all word id
@@ -371,10 +363,12 @@ class crawler(object):
                 
                 url =  self._docid_url_dic[doc_id]
                 url_set.add(url)
-                    
-            revolived_inverted_index_dict[word] = url_set
-        
-        print revolived_inverted_index_dict
+            
+            #print str(self.resolved_inverted_index_dict)      
+            self.resolved_inverted_index_dict.update({word:url_set})
+    
+
+        print "Resloved_inverted_index: " + str(self.resolved_inverted_index_dict)
 
     def crawl(self, depth=2, timeout=3):
         """Crawl the web!"""
@@ -408,9 +402,7 @@ class crawler(object):
                 self._curr_doc_id = doc_id
                 self._font_size = 0
                 self._curr_words = [ ]
-                #pdb.set_trace()
                 self._index_document(soup)
-                #pdb.set_trace()
                 self._add_words_to_document()
                 print "    url="+repr(self._curr_url) + '\n'
         
@@ -421,9 +413,16 @@ class crawler(object):
             finally:
                 if socket:
                     socket.close()
-        print str(self._docid_url_dic) + '\n' 
-        # str(self._wordid_word_dic) + '\n' + str(self._docid_listofword_dic) + '\n'
+
+        #self.get_inverted_index()
+        #self.resolved_inverted_index()
+        #print str(self._lexicon) + '\n'
+        #str(self._docid_url_dic) + '\n' + str(self._wordid_word_dic) + '\n'+ str(self._docid_listofword_dic) + '\n'
 
 if __name__ == "__main__":
     bot = crawler(None, "urls.txt")
     bot.crawl(depth=1)
+    #print inverted_index dic
+    bot.get_inverted_index()
+    print '\n'
+    bot.resolved_inverted_index()
