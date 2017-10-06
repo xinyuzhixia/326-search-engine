@@ -6,30 +6,33 @@ historysearch={}
 
 @route('/')
 def search():
-	#return template('Query.html')
-	return'<html><head><title>Googing Search</title></head>\
-			<body><h1>Googing</h1><form action= "/search" method = "GET">\
+
+	if request.query.keywords: 
+			keywords = request.query.keywords	
+			output = check_appearance(keywords)
+			string = '<p>Search for "%s"</p>'%(keywords)
+			results = '<table id = "results"><tr> <th>Word</th> <th>Count</th></tr>'
+			history = '<table id = "history"><tr> <th>Word</th> <th>Count</th></tr>'
+			for key in output:
+				tablecontent = '<tr><td>%s</td><td>%d</td></tr>'%(key,output[key])
+				results = results+tablecontent
+				store_history(key,output[key])	
+			results = results+'</table>'
+
+			for key,value in sorted(historysearch.iteritems(),key=lambda (k,v):(v,k),reverse=True):
+				historyvalue='<tr><td>%s</td><td>%d</td></tr>'%(key,value)
+				history = history+historyvalue
+			history = history + '</table>'	
+			return string + results + "<p>Search history</p>"+history
+
+
+	else: 
+		return'<html><head><title>Googing Search</title></head>\
+			<body><h1>Googing</h1><form action= "/" method = "GET">\
 			<input type="text" name="keywords" ><br>\
 			<input type="submit" value="Search"></form></body></html>'
 
-@route('/search')
-def do_search():
-	keywords = request.query.keywords	
-	output = check_appearance(keywords)
-	string = '<p>Search for "%s"</p>'%(keywords)
-	results = '<table id = "results"><tr> <th>Word</th> <th>Count</th></tr>'
-	history = '<table id = "history"><tr> <th>Word</th> <th>Count</th></tr>'
-	for key in output:
-		tablecontent = '<tr><td>%s</td><td>%d</td></tr>'%(key,output[key])
-		results = results+tablecontent
-		store_history(key,output[key])	
-	results = results+'</table>'
 
-	for key,value in sorted(historysearch.iteritems(),key=lambda (k,v):(v,k),reverse=True):
-		historyvalue='<tr><td>%s</td><td>%d</td></tr>'%(key,value)
-		history = history+historyvalue
-	history = history + '</table>'	
-	return string + results + "<p>Search history</p>"+history
 
 
 def store_history(key,value):
