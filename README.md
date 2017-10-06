@@ -1,5 +1,11 @@
 Frontend:
 
+1. Open terminal, go to the program directory and run:
+	python Frontend.py
+
+2. open internet browser, go to http://localhost:8080/
+
+3. type in string and click "search"
 
 
 
