@@ -27,10 +27,7 @@ def search():
 
 
 	else: 
-		return'<html><head><title>Googing Search</title></head>\
-			<body><h1>Googing</h1><form action= "/" method = "GET">\
-			<input type="text" name="keywords" ><br>\
-			<input type="submit" value="Search"></form></body></html>'
+		return template('Query.html')
 
 
 
