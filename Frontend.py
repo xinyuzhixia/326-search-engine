@@ -9,7 +9,7 @@ from beaker.middleware import SessionMiddleware
 import httplib2
 import bottle
 historysearch={}
-
+userRecentSearch={}
 session_opts = {
     'session.type': 'file',
     'session.cookie_expires': 300,
@@ -21,30 +21,46 @@ app = SessionMiddleware(bottle.app(), session_opts)
 @route('/')
 def search():
 	sign = 0 
+
 	s = request.environ.get('beaker.session')
 	if s is not None and "email" in s:
 		sign = 1
-		#if the user type in a string 
-		if request.query.keywords: 
-				keywords = request.query.keywords
-				#check how many times each word occurs in the user typed string	
-				output = check_appearance(keywords)
-				for key in output:
-					# store the searched string in the history dict
-					store_history(key,output[key])
+		email = s['email']
 
-				d_sorted_by_value = sorted(historysearch.items(), key=lambda x: x[1],reverse = True)
-				return template('index',results=output,keywords=keywords,history=d_sorted_by_value[:20],user_email=email)
+	if request.query.keywords: 
+
+		keywords = request.query.keywords
+		print keywords
+			#check how many times each word occurs in the user typed string	
+		output = check_appearance(keywords)
+		
+		if sign==1:
+				# store the searched string in the history dict
+			store_history(output)
+			store_recentsearch(email,output)
+			d_sorted_by_value = sorted(historysearch.items(), key=lambda x: x[1],reverse = True)
+			return template('index',results=output,keywords=keywords,history=d_sorted_by_value[:20],user_email=email,login=sign,recentsearch=userRecentSearch[email][0:20])
 		else: 
-			return template('Query',Login= sign,email = s['email']) 
+			return template('index',results=output,keywords=keywords,login=sign)
 	#display the main menu if the user does not enter a string
-	return template('Query',Login= sign) 
+	if sign == 1:
+		return template('Query',Login= sign,user_email=email)
+	else: 
+		return template('Query',Login= sign)
 #google login 
 @route('/login')
 def login():
 	flow = flow_from_clientsecrets("client_secrets.json",scope = 'https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.email',redirect_uri='http://localhost:8080/redirect')
 	uri = flow.step1_get_authorize_url()
 	redirect(str(uri))
+
+
+@route('/logout')
+def logout():
+	session = request.environ.get('beaker.session')
+	session.delete()
+	redirect(str("/"))
+
 
 #exchange code
 @get('/redirect')
@@ -66,14 +82,31 @@ def redirect_page():
 	redirect(str("/"))
 
 
-def store_history(key,value):
-	if key in historysearch:
-		#if it has ever occured in the history, add the appearance
-		historysearch[key] = historysearch[key] + value
-	else:
-		#if it never occurs
-		historysearch[key] = value
+def store_history(output):
+	for key in output:
+		if key in historysearch:
+			#if it has ever occured in the history, add the appearance
+			historysearch[key] = historysearch[key] + output[key]
+		else:
+			#if it never occurs
+			historysearch[key] = output[key]
+
 	return
+
+def store_recentsearch(email,keywords):
+	if email not in userRecentSearch:
+		userRecentSearch[email] = []
+	#if has search history 
+	for word in keywords:
+		if word not in userRecentSearch[email]:
+			userRecentSearch[email].insert(0,word)
+		else:
+			userRecentSearch[email].remove(word)
+			userRecentSearch[email].insert(0,word)
+	return
+
+
+
 
 #check the appearance of each word
 def check_appearance(inputstring):

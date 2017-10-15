@@ -25,9 +25,10 @@
 			<input type="text" name="keywords" style = "width: 300px; height: 30px;"></br></br>
 			<input type="submit" value="Search" style="float: right;"></br></br>
 			%if Login: 
-				<p>{{email}}</p>
+				<p>{{user_email}}</p>
+				<input type="submit" value="logout" style="float: right;" formaction="/logout">
 			%else: 
-				<input type="button" value="login" style="float: right;">
+				<input type="submit" value="login" style="float: right;"formaction="/login">
 			</form>
 	</body>
 
