@@ -21,8 +21,13 @@
 	<body>
 		<h1>Googing</h1>
 			<form action= "/" method = "GET">
-			<input type="text" name="keywords" >
-			<input type="submit" value="Search">
+			
+			<input type="text" name="keywords" style = "width: 300px; height: 30px;"></br></br>
+			<input type="submit" value="Search" style="float: right;"></br></br>
+			%if Login: 
+				<p>{{email}}</p>
+			%else: 
+				<input type="button" value="login" style="float: right;">
 			</form>
 	</body>
 
