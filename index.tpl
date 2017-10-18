@@ -1,5 +1,15 @@
+<style>
+	table {
+	    border-collapse: collapse;
+	    width: 30%;
+	}
 
-
+	th, td {
+	    padding: 8px;
+	    text-align: left;
+	    border-bottom: 1px solid #ddd;
+	}
+</style>
 <p style="font-family:verdana;font-size:120%; background-color: lightblue;">Search for {{keywords}}</p>
 <table id = "results"><tr> <th>Word</th> <th>Count</th></tr>
 %for keyword in results:
@@ -22,9 +32,9 @@
 %end
 </table>
 
-
-<form action= "/logout" method = "GET">
-		<p style="float: right;">{{user_email}}</p>
+<p style="float: right;">{{user_email}}</p>
+<form action= "/logout" method = "GET"> </br></br>
+		
 		<input type="submit" value="logout" style="float: right;">
 </form>
 
