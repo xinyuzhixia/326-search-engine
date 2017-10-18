@@ -23,7 +23,6 @@
 </table>
 
 
-
 <form action= "/logout" method = "GET">
 		<p style="float: right;">{{user_email}}</p>
 		<input type="submit" value="logout" style="float: right;">
@@ -36,6 +35,13 @@
 		<input type="submit" value="login" style="float: right;">
 </form>
 		
+%end 
+
+<form action= "/" method = "GET">
+			
+			<input type="text" name="keywords" style = "width: 300px; height: 30px;">
+			<input type="submit" value="Search"></br></br>
+<form>
 
 
 
