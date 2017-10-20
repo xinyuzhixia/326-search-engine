@@ -11,8 +11,8 @@ def main():
 
     connection = boto.ec2.connect_to_region(# hard code the user's credentials
         'us-east-1',
-        aws_access_key_id = 'AKIAIHBI3K2OP5ZMCWEA',
-        aws_secret_access_key = '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',)
+        aws_access_key_id = '********',
+        aws_secret_access_key = '******',)
     
     # allocte ip address
     allocation = connection.allocate_address( domain = 'standard')
