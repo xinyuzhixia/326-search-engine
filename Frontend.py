@@ -6,13 +6,14 @@ from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from operator import itemgetter
 from beaker.middleware import SessionMiddleware
+from paste import httpserver
 import httplib2
 import bottle
 historysearch={}
 userRecentSearch={}
 session_opts = {
     'session.type': 'file',
-    'session.cookie_expires': 300,
+    'session.cookie_expires': 30,
     'session.data_dir': './data',
     'session.auto': True
 }
@@ -30,7 +31,6 @@ def search():
 	if request.query.keywords: 
 
 		keywords = request.query.keywords
-		print keywords
 			#check how many times each word occurs in the user typed string	
 		output = check_appearance(keywords)
 		
@@ -50,7 +50,8 @@ def search():
 #google login 
 @route('/login')
 def login():
-	flow = flow_from_clientsecrets("client_secrets.json",scope = 'https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.email',redirect_uri='http://localhost:8080/redirect')
+	flow = flow_from_clientsecrets("client_secrets.json",scope = 'https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.email',
+		redirect_uri='http://ec2.34.237.47.138.compute-1.amazonaws.com:80/redirect')
 	uri = flow.step1_get_authorize_url()
 	redirect(str(uri))
 
@@ -59,7 +60,7 @@ def login():
 def logout():
 	session = request.environ.get('beaker.session')
 	session.delete()
-	redirect(str("/"))
+	redirect(str('/'))
 
 
 #exchange code
@@ -68,7 +69,7 @@ def redirect_page():
 	code=request.query.get('code','')
 	flow = OAuth2WebServerFlow(client_id = '975568128457-pa8684b9d0njq8mqdigac3tvu9o1j6u8.apps.googleusercontent.com',
 	 client_secret='Ejb4FXaANO9e4PvUp7brfIIZ', scope='https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.email', 
-	 redirect_uri='http://localhost:8080/redirect')
+	 redirect_uri='http://ec2.34.237.47.138.compute-1.amazonaws.com:80/redirect')
 	credentials=flow.step2_exchange(code)
 	token=credentials.id_token['sub']
 	http=httplib2.Http()
@@ -124,4 +125,4 @@ def check_appearance(inputstring):
 	return appearance
 
 
-run(app=app,host='localhost', port=8080, debug=True)
+httpserver.serve(application=app,host='0.0.0.0', port=80)
